@@ -38,9 +38,9 @@ export default {
   name: "TaskModal",
   props: {
     tasks: {
-      type: Array,
+      type: Object,
       default() {
-        return [];
+        return { queued: [], progress: [], finished: [] };
       },
     },
   },
@@ -58,10 +58,10 @@ export default {
   },
   computed: {
     $error() {
-      const { name } = this.form;
+      const { name, status } = this.form;
       if (!name || name.length <= 0) return "Debe escribir un nombre.";
 
-      const { tasks } = this;
+      const tasks = this.tasks[status];
       if (tasks && tasks.length) {
         for (const task of tasks) {
           if (task.name.toLowerCase() === name.toLowerCase()) {
@@ -75,14 +75,15 @@ export default {
   },
   methods: {
     $show(task = null) {
-      const { tasks } = this;
-      const frm = this.form;
       const valid = typeof task === "object" && task !== null;
+      const status = valid ? task.status : "queued";
+      const tasks = this.tasks[status];
+      const frm = this.form;
       frm.id = valid ? task.id : new Date().getTime();
       frm.orderIdx = valid ? task.orderIdx : tasks.length;
       frm.name = valid ? task.name : "";
       frm.description = valid ? task.description : "";
-      frm.status = valid ? task.status : "queued";
+      frm.status = status;
       this.show = true;
     },
     $hide() {
