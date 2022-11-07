@@ -31,6 +31,7 @@ export default {
       const { variant } = this;
       const classes = [];
       if (variant === "progress") classes.push("ic-progress");
+      if (variant === "finished") classes.push("ic-finished");
 
       return classes;
     },
@@ -60,5 +61,9 @@ export default {
 
 .i-card.ic-progress {
   background-color: #ff7f3f;
+}
+
+.i-card.ic-finished {
+  background-color: #82CD47;
 }
 </style>
