@@ -80,15 +80,7 @@
     </div>
     <h4 class="mb-5 d-block">Tareas terminadas</h4>
     <div class="container">
-      <Draggable
-        :list="tasks.finished"
-        id="tasksFinished"
-        @start="onDragStart"
-        @end="onDragEnd"
-        @change="onDragChange"
-        group="status"
-        class="row i-drag"
-      >
+      <div :list="tasks.finished" id="tasksFinished" group="status" class="row">
         <div
           v-for="task of tasks.finished"
           :key="task.id"
@@ -103,7 +95,7 @@
         <NoTasksContainer
           v-if="!tasks.finished || tasks.finished.length <= 0"
         />
-      </Draggable>
+      </div>
     </div>
   </div>
 </template>
@@ -138,45 +130,45 @@ export default {
     };
   },
   watch: {
-    remainingSeconds(value){
+    remainingSeconds(value) {
       const { temporizador } = this;
 
-      if (value === 5 && temporizador.totalSeconds > 0){
+      if (value === 5 && temporizador.totalSeconds > 0) {
         this.mostrarNotifacionDescanso();
       }
 
-      if (value > 0 || temporizador.totalSeconds <= 0)
-      return;
-      
+      if (value > 0 || temporizador.totalSeconds <= 0) return;
 
-      const audio = new Audio(require('./assets/timer.mp3'));
+      const audio = new Audio(require("./assets/timer.mp3"));
       audio.play();
 
       this.audioReference = audio;
-    }
+    },
   },
   computed: {
     isTemporizadorRunning() {
       return this.temporizador.idx > 0;
     },
-    remainingSeconds(){
+    remainingSeconds() {
       return this.temporizador.remainingSeconds;
-    }
+    },
   },
   methods: {
-    async mostrarNotifacionDescanso(){
+    async mostrarNotifacionDescanso() {
       const { temporizador } = this;
-      const {isDescanso} = temporizador;
-      try{
-      await this.$swal({
-          title: 'El temporizador está por acabar',
-          text: '',
-          icon: 'warning',
-          confirmButtonText: 'Entedido',
+      const { isDescanso } = temporizador;
+      try {
+        await this.$swal({
+          title: "El temporizador está por acabar",
+          text: "",
+          icon: "warning",
+          confirmButtonText: "Entedido",
         });
-      }catch(e){ console.log(e) }
+      } catch (e) {
+        console.log(e);
+      }
 
-      if (this.audioReference !== null){
+      if (this.audioReference !== null) {
         this.audioReference.pause();
         this.audioReference = null;
       }
@@ -188,19 +180,26 @@ export default {
       temporizador.isDescanso = !isDescanso;
       temporizador.totalSeconds = 60 * 5;
       temporizador.remainingSeconds = temporizador.totalSeconds;
-      
     },
-    onResumePause(){
+    onResumePause() {
       const { isPause } = this.temporizador;
       this.temporizador.isPause = !isPause;
     },
     onDragStart() {
       this.drag = true;
     },
-    onDragEnd(e) {
+    onDragEnd() {
       this.drag = false;
     },
     onDragChange() {
+      for (const [status, tasks] of Object.entries(this.tasks)) {
+        let idx = 0;
+        for (const task of tasks) {
+          task.status = status;
+          task.orderIdx = idx;
+          idx++;
+        }
+      }
       localStorage.setItem("tasks", JSON.stringify(this.tasks));
     },
     attemptNewTask() {
@@ -217,7 +216,37 @@ export default {
       localStorage.setItem("tasks", JSON.stringify(this.tasks));
     },
     async handleClickTask(task) {
-      console.log({ task });
+      const { tasks } = this;
+      const idx = tasks.progress.findIndex((e) => e.id === task.id);
+      if (idx === -1) {
+        return;
+      }
+
+      if (task.status === "progress") {
+        const result = await this.$swal({
+          title: "¿Desea marcar esta tarea como terminada?",
+          text: `La tarea "${task.name}" será marcada como terminada, no podrá deshacer esta acción.`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Sí",
+          cancelButtonText: "No",
+          reverseButtons: true,
+        });
+        if (!result || !result.value) return;
+      }
+
+      tasks.progress.splice(idx, 1);
+      tasks.finished.push(task);
+
+      // Mapear persitencia
+      this.onDragChange();
+
+      this.$swal({
+        title: "Se ha marcado la tarea como completada.",
+        text: `La tarea "${task.name}" se ha marcado como completada exitosamente.`,
+        icon: "success",
+        confirmButtonText: "Entendido",
+      });
     },
     iniciarTemporizador() {
       const tasks = this.tasks.progress;
@@ -230,11 +259,11 @@ export default {
       }
 
       const { temporizador } = this;
-      temporizador.totalSeconds = 6;// 25 * 60;
+      temporizador.totalSeconds = 6; // 25 * 60;
       temporizador.remainingSeconds = temporizador.totalSeconds;
       temporizador.isPause = false;
       temporizador.idx = setInterval(() => {
-        if (temporizador.isPause){
+        if (temporizador.isPause) {
           return;
         }
 
@@ -248,17 +277,16 @@ export default {
     async cancelarTemporizador() {
       const { temporizador } = this;
       const result = await this.$swal({
-        title: '¿Desea cancelar el temporizador?',
-        text: 'El temporizador se resteblecerá a su inicio.',
-        icon: 'warning',
+        title: "¿Desea cancelar el temporizador?",
+        text: "El temporizador se resteblecerá a su inicio.",
+        icon: "warning",
         showCancelButton: true,
-        confirmButtonText: 'Sí',
-        cancelButtonText: 'No',
+        confirmButtonText: "Sí",
+        cancelButtonText: "No",
         reverseButtons: true,
       });
-      
-      if (result.isConfirmed !== true)
-      return;
+
+      if (result.isConfirmed !== true) return;
 
       clearInterval(temporizador.idx);
       temporizador.idx = 0;
