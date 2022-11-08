@@ -27,7 +27,11 @@
     </div>
     <div class="row mb-5">
       <div class="col-sm-8 offset-sm-2">
-        <Temporizador :data="temporizador" @onResumePause="onResumePause" />
+        <Temporizador
+          :data="temporizador"
+          @onResumePause="onResumePause"
+          @onOmitirDescanso="omitirDescanso"
+        />
       </div>
     </div>
     <h4 class="mb-5 d-block">Tareas pendientes</h4>
@@ -155,18 +159,26 @@ export default {
     },
   },
   methods: {
-    async mostrarNotifacionDescanso() {
+    omitirDescanso() {
+      const { temporizador } = this;
+      if (!temporizador.isDescanso) return;
+
+      this.mostrarNotifacionDescanso(false);
+    },
+    async mostrarNotifacionDescanso(warn = true) {
       const { temporizador } = this;
       const { isDescanso } = temporizador;
-      try {
-        await this.$swal({
-          title: "El temporizador está por acabar",
-          text: "",
-          icon: "warning",
-          confirmButtonText: "Entedido",
-        });
-      } catch (e) {
-        console.log(e);
+      if (warn) {
+        try {
+          await this.$swal({
+            title: "El temporizador está por acabar",
+            text: "",
+            icon: "warning",
+            confirmButtonText: "Entedido",
+          });
+        } catch (e) {
+          console.log(e);
+        }
       }
 
       if (this.audioReference !== null) {
@@ -179,12 +191,12 @@ export default {
       this.iniciarTemporizador();
       temporizador.isPause = false;
       temporizador.isDescanso = !isDescanso;
-      temporizador.totalSeconds = 60 * 5;
+      temporizador.totalSeconds = temporizador.isDescanso ? 30 : 50; // 60 * 5;
       temporizador.remainingSeconds = temporizador.totalSeconds;
       if (temporizador.isDescanso) {
         temporizador.count++;
         if (temporizador.count >= temporizador.descansoLargo) {
-          temporizador.totalSeconds = 20 * 60;
+          temporizador.totalSeconds = 60; // 20 * 60;
           temporizador.remainingSeconds = temporizador.totalSeconds;
           temporizador.count = 0;
         }
@@ -287,7 +299,7 @@ export default {
       }
 
       const { temporizador } = this;
-      temporizador.totalSeconds = 25 * 60;
+      temporizador.totalSeconds = 50; // 25 * 60;
       temporizador.remainingSeconds = temporizador.totalSeconds;
       temporizador.isPause = false;
       temporizador.idx = setInterval(() => {

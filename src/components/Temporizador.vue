@@ -15,12 +15,20 @@
       >El temporizador se ha puesto en pausa.</b-alert
     >
     <b-btn
-      class="mt-3"
+      class="mt-3 d-inline-block mr-3"
       :variant="isTemporizadorRunning ? 'warning' : 'success'"
       v-if="data.remainingSeconds > 0"
       @click="$emit('onResumePause')"
     >
       {{ isTemporizadorRunning ? "Pausar" : "Reanudar" }} temporizador
+    </b-btn>
+    <b-btn
+      class="mt-3 d-inline-block"
+      variant="dark"
+      v-if="data.remainingSeconds > 0 && data.isDescanso"
+      @click="onOmitirDescanso"
+    >
+      Omitir descanso
     </b-btn>
   </div>
 </template>
@@ -65,8 +73,26 @@ export default {
       return { text, value };
     },
   },
+  methods: {
+    async onOmitirDescanso() {
+      const result = await this.$swal({
+        title: "¿Desea omitir el descanso?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí",
+        cancelButtonText: "No",
+        reverseButtons: true,
+      });
+      if (!result || !result.value) return;
+
+      this.$emit("onOmitirDescanso");
+    },
+  },
 };
 </script>
 
 <style>
+.mr-3 {
+  margin-right: 1rem;
+}
 </style>
