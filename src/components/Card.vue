@@ -6,12 +6,18 @@
       :class="[$classes]"
     >
       <h4 class="mb-3">{{ task.name }}</h4>
-      <small>{{ task.description }}</small>
+      <div class="i-card-finished" v-if="$finishedAt">
+        <b>Terminado</b>
+        <b>{{ $finishedAt }}</b>
+      </div>
+      <small v-else>{{ task.description }}</small>
     </div>
   </div>
 </template>
 
 <script>
+import moment from "moment";
+
 export default {
   name: "ICard",
   props: {
@@ -34,6 +40,13 @@ export default {
       if (variant === "finished") classes.push("ic-finished");
 
       return classes;
+    },
+    $finishedAt() {
+      const { finishedAt, status } = this.task;
+      if (status !== "finished") return null;
+
+      const $finishedAt = new moment(finishedAt);
+      return $finishedAt.format("DD/MM/YYYY LTS");
     },
   },
 };
@@ -64,6 +77,14 @@ export default {
 }
 
 .i-card.ic-finished {
-  background-color: #82CD47;
+  background-color: #82cd47;
+}
+
+.i-card-finished {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>

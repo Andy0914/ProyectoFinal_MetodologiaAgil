@@ -53,6 +53,7 @@ export default {
         name: "",
         description: "",
         status: "queued",
+        finishedAt: 0,
       },
     };
   },
@@ -99,7 +100,7 @@ export default {
         });
         return;
       }
-      this.$emit("onSubmit", this.form);
+      this.$emit("onSubmit", { ...this.form });
       this.$hide();
     },
   },

@@ -21,7 +21,7 @@
           variant="danger"
           @click="cancelarTemporizador"
           v-else-if="isTemporizadorRunning"
-          >Cancelar temporizador</b-button
+          >Reestablecer temporizador</b-button
         >
       </div>
     </div>
@@ -80,17 +80,13 @@
     </div>
     <h4 class="mb-5 d-block">Tareas terminadas</h4>
     <div class="container">
-      <div :list="tasks.finished" id="tasksFinished" group="status" class="row">
+      <div :list="$finishedTasks" id="tasksFinished" group="status" class="row">
         <div
-          v-for="task of tasks.finished"
+          v-for="task of $finishedTasks"
           :key="task.id"
           class="col-sm-3 offset-sm-1 mb-5"
         >
-          <Card
-            :task="task"
-            @click="() => handleClickTask(task)"
-            variant="finished"
-          />
+          <Card :task="task" variant="finished" />
         </div>
         <NoTasksContainer
           v-if="!tasks.finished || tasks.finished.length <= 0"
@@ -125,6 +121,7 @@ export default {
         isPause: false,
         isDescanso: false,
         count: 0,
+        descansoLargo: 4,
       },
       audioReference: null,
     };
@@ -151,6 +148,10 @@ export default {
     },
     remainingSeconds() {
       return this.temporizador.remainingSeconds;
+    },
+    $finishedTasks() {
+      const { finished } = this.tasks;
+      return finished.sort((a, b) => b.finishedAt - a.finishedAt);
     },
   },
   methods: {
@@ -180,6 +181,14 @@ export default {
       temporizador.isDescanso = !isDescanso;
       temporizador.totalSeconds = 60 * 5;
       temporizador.remainingSeconds = temporizador.totalSeconds;
+      if (temporizador.isDescanso) {
+        temporizador.count++;
+        if (temporizador.count >= temporizador.descansoLargo) {
+          temporizador.totalSeconds = 20 * 60;
+          temporizador.remainingSeconds = temporizador.totalSeconds;
+          temporizador.count = 0;
+        }
+      }
     },
     onResumePause() {
       const { isPause } = this.temporizador;
@@ -191,16 +200,34 @@ export default {
     onDragEnd() {
       this.drag = false;
     },
-    onDragChange() {
+    onDragChange(e) {
+      const movedTask = e && e.added ? e.added.element : null;
+      let lastStatus = movedTask ? movedTask.status : null;
+      let newStatus = null;
+
       for (const [status, tasks] of Object.entries(this.tasks)) {
         let idx = 0;
         for (const task of tasks) {
+          if (movedTask !== null && task.id === movedTask.id) {
+            newStatus = status;
+          }
           task.status = status;
           task.orderIdx = idx;
           idx++;
         }
       }
+
       localStorage.setItem("tasks", JSON.stringify(this.tasks));
+
+      // Requerimiento historia 13: Marcar tarea en progreso como pendiente
+      if (lastStatus === "progress" && newStatus === "queued") {
+        this.$swal({
+          title: "Se ha marcado la tarea como pendiente.",
+          text: `La tarea "${movedTask.name}" se ha marcado como pendiente exitosamente.`,
+          icon: "success",
+          confirmButtonText: "Entendido",
+        });
+      }
     },
     attemptNewTask() {
       this.$refs.taskModal.$show(null);
@@ -237,6 +264,7 @@ export default {
 
       tasks.progress.splice(idx, 1);
       tasks.finished.push(task);
+      task.finishedAt = new Date().getTime();
 
       // Mapear persitencia
       this.onDragChange();
@@ -259,7 +287,7 @@ export default {
       }
 
       const { temporizador } = this;
-      temporizador.totalSeconds = 6; // 25 * 60;
+      temporizador.totalSeconds = 25 * 60;
       temporizador.remainingSeconds = temporizador.totalSeconds;
       temporizador.isPause = false;
       temporizador.idx = setInterval(() => {
@@ -277,7 +305,7 @@ export default {
     async cancelarTemporizador() {
       const { temporizador } = this;
       const result = await this.$swal({
-        title: "¿Desea cancelar el temporizador?",
+        title: "¿Desea reestablecer el temporizador?",
         text: "El temporizador se resteblecerá a su inicio.",
         icon: "warning",
         showCancelButton: true,

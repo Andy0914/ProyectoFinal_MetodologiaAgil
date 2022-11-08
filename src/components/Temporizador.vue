@@ -1,16 +1,26 @@
 <template>
   <div class="i-temporizador">
     <h2 v-if="data.isDescanso" class="text-primary fw-bold">Descanso</h2>
+    <b>{{ $pomodorosRestantes }}</b>
     <h4>{{ render.text }}</h4>
-    <b-progress height="1rem" :value="render.value" :variant="data.isPause ? 'warning' : (data.isDescanso ? 'info' : 'primary')" />
-    <b-alert class="mt-3 mb-0" variant="warning" :show="!isTemporizadorRunning && data.remainingSeconds > 0">El temporizador se ha puesto en pausa.</b-alert>
-    <b-btn 
-    class="mt-3"
-    :variant="isTemporizadorRunning ? 'warning' : 'success'"
-    v-if="data.remainingSeconds > 0"
-    @click="$emit('onResumePause')"
+    <b-progress
+      height="1rem"
+      :value="render.value"
+      :variant="data.isPause ? 'warning' : data.isDescanso ? 'info' : 'primary'"
+    />
+    <b-alert
+      class="mt-3 mb-0"
+      variant="warning"
+      :show="!isTemporizadorRunning && data.remainingSeconds > 0"
+      >El temporizador se ha puesto en pausa.</b-alert
     >
-    {{ isTemporizadorRunning ? 'Pausar' : 'Reanudar'}} temporizador
+    <b-btn
+      class="mt-3"
+      :variant="isTemporizadorRunning ? 'warning' : 'success'"
+      v-if="data.remainingSeconds > 0"
+      @click="$emit('onResumePause')"
+    >
+      {{ isTemporizadorRunning ? "Pausar" : "Reanudar" }} temporizador
     </b-btn>
   </div>
 </template>
@@ -32,7 +42,15 @@ export default {
     },
   },
   computed: {
-    isTemporizadorRunning(){
+    $pomodorosRestantes() {
+      const { count, descansoLargo } = this.data;
+      const restantes = descansoLargo - count;
+      if (restantes > 1) {
+        return `${restantes} pomodoros restantes`;
+      }
+      return `${restantes} pomodoro restante`;
+    },
+    isTemporizadorRunning() {
       const { remainingSeconds, isPause } = this.data;
       return remainingSeconds > 0 && !isPause;
     },
