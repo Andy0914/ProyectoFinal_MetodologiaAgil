@@ -63,7 +63,8 @@ export default {
       if (!name || name.length <= 0) return "Debe escribir un nombre.";
 
       const tasks = this.tasks[status];
-      if (tasks && tasks.length) {
+      const foundTask = tasks.find((e) => e.id === this.form.id);
+      if (tasks && tasks.length && !foundTask) {
         for (const task of tasks) {
           if (task.name.toLowerCase() === name.toLowerCase()) {
             return "El nombre de esta tarea ya se encuentra en uso.";
@@ -96,7 +97,7 @@ export default {
         this.$swal({
           icon: "error",
           title: "Error",
-          text: this.$error,
+          te9xt: this.$error,
         });
         return;
       }

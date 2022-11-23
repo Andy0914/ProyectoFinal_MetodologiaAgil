@@ -1,5 +1,9 @@
 <template>
-  <div class="i-card-container">
+  <div
+    class="i-card-container"
+    @mouseover="isHover = true"
+    @mouseleave="isHover = false"
+  >
     <div
       class="i-card shadow rounded pt-3"
       @click="$emit('click')"
@@ -11,6 +15,26 @@
         <b>{{ $finishedAt }}</b>
       </div>
       <small v-else>{{ task.description }}</small>
+    </div>
+    <div class="d-flex">
+      <b-btn
+        v-if="task.status !== 'finished'"
+        size="sm"
+        variant="danger"
+        class="i-card-btn d-block mt-3 mr-3"
+        :class="{ hover: isHover }"
+        @click="$emit('onDelete', task)"
+        >Eliminar</b-btn
+      >
+      <b-btn
+        v-if="task.status !== 'finished'"
+        size="sm"
+        variant="dark"
+        class="i-card-btn d-block mt-3"
+        :class="{ hover: isHover }"
+        @click="$emit('onEdit', task)"
+        >Modificar</b-btn
+      >
     </div>
   </div>
 </template>
@@ -31,6 +55,11 @@ export default {
       type: String,
       default: "",
     },
+  },
+  data() {
+    return {
+      isHover: false,
+    };
   },
   computed: {
     $classes() {
@@ -57,6 +86,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
   width: 100%;
   height: 100%;
 }
@@ -86,5 +116,14 @@ export default {
   justify-content: space-between;
   align-items: center;
   color: rgba(255, 255, 255, 0.8);
+}
+
+.i-card-btn {
+  opacity: 0;
+  transition: 200ms;
+}
+
+.i-card-btn.hover {
+  opacity: 1;
 }
 </style>

@@ -50,7 +50,12 @@
           :key="task.id"
           class="col-sm-3 offset-sm-1 mb-5"
         >
-          <Card :task="task" @click="() => handleClickTask(task)" />
+          <Card
+            :task="task"
+            @click="() => handleClickTask(task)"
+            @onEdit="onEditTask"
+            @onDelete="onDeleteTask"
+          />
         </div>
         <NoTasksContainer v-if="!tasks.queued || tasks.queued.length <= 0" />
       </Draggable>
@@ -74,6 +79,8 @@
           <Card
             :task="task"
             @click="() => handleClickTask(task)"
+            @onEdit="onEditTask"
+            @onDelete="onDeleteTask"
             variant="progress"
           />
         </div>
@@ -159,6 +166,27 @@ export default {
     },
   },
   methods: {
+    async onDeleteTask(task) {
+      const tasks = this.tasks[task.status];
+      const idx = tasks.findIndex((e) => e.id === task.id);
+      if (idx === -1) return;
+
+      const result = await this.$swal({
+        title: "¿Desea eliminar la tarea seleccionada?",
+        text: `La tarea "${task.name}" será eliminada.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí",
+        cancelButtonText: "No",
+        reverseButtons: true,
+      });
+      if (!result || !result.value) return;
+
+      tasks.splice(idx, 1);
+    },
+    onEditTask(task) {
+      this.$refs.taskModal.$show(task);
+    },
     omitirDescanso() {
       const { temporizador } = this;
       if (!temporizador.isDescanso) return;
@@ -250,8 +278,10 @@ export default {
       const idx = tasks.findIndex((e) => e.id === task.id);
       if (idx !== -1) {
         tasks[idx] = task;
+        this.$forceUpdate();
+      } else {
+        tasks.push(task);
       }
-      tasks.push(task);
       localStorage.setItem("tasks", JSON.stringify(this.tasks));
     },
     async handleClickTask(task) {
@@ -332,6 +362,8 @@ export default {
       temporizador.idx = 0;
       temporizador.totalSeconds = 0;
       temporizador.remainingSeconds = 0;
+      // Correccion Sprint 3, restablecer pomodoros a cero
+      temporizador.count = 0;
     },
   },
   created() {
